@@ -1,8 +1,8 @@
 import gym
 
-from stable_baselines.common.vec_env import DummyVecEnv
-from stable_baselines.deepq.policies import MlpPolicy
-from stable_baselines import DQN
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.deepq.policies import MlpPolicy
+from stable_baselines3 import DQN
 
 env = gym.make("CartPole-v1")
 
