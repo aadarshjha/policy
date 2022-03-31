@@ -4,18 +4,17 @@ from stable_baselines3 import DQN
 
 env = gym.make("CartPole-v0")
 
-model = DQN("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=10000, log_interval=4)
-model.save("dqn_cartpole")
+model = DQN('MlpPolicy', 'CartPole-v1', verbose=1, tensorboard_log="./dqn_cartpole_tensorboard/")
+model.learn(total_timesteps=10_000, tb_log_name="first_run")
 
-del model # remove to demonstrate saving and loading
+# del model # remove to demonstrate saving and loading
 
-model = DQN.load("dqn_cartpole")
+# model = DQN.load("dqn_cartpole")
 
-obs = env.reset()
-while True:
-    action, _states = model.predict(obs, deterministic=True)
-    obs, reward, done, info = env.step(action)
-    env.render()
-    if done:
-      obs = env.reset()
+# obs = env.reset()
+# while True:
+#     action, _states = model.predict(obs, deterministic=True)
+#     obs, reward, done, info = env.step(action)
+#     env.render()
+#     if done:
+#       obs = env.reset()
