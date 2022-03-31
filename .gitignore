@@ -154,3 +154,6 @@ cython_debug/
 
 # adds venv folder -- use pip freeze
 reinforcement/
+
+# ignore any zips
+*.zip
