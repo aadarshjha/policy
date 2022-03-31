@@ -157,3 +157,6 @@ reinforcement/
 
 # ignore any zips
 *.zip
+
+# macs
+.DS_Store
