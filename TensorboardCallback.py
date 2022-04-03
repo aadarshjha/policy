@@ -1,7 +1,8 @@
-import numpy as np 
+import numpy as np
 
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
+
 
 class TensorboardCallback(BaseCallback):
     """
@@ -14,6 +15,5 @@ class TensorboardCallback(BaseCallback):
     def _on_step(self) -> bool:
         # Log scalar value (here a random variable)
         value = np.random.random()
-        self.logger.record('random_value', value)
+        self.logger.record("random_value", value)
         return True
-

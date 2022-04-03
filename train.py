@@ -50,7 +50,7 @@ class ExecuteTraining:
                 exploration_initial_eps=initial_epsilon,
                 seed=seed,
                 verbose=verbose,
-                tensorboard_log="./dqn_cartpole_tensorboard/" + self.experiment_name
+                tensorboard_log="./dqn_cartpole_tensorboard/" + self.experiment_name,
             )
 
     def run(self):
