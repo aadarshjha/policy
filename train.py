@@ -64,7 +64,7 @@ class ExecuteTraining:
         # evaluates the model over 10 episodes, collects mean and standard deviation.
         eval_env = gym.make(self.env_name)
         mean_reward, std_reward = evaluate_policy(
-            self.model, eval_env, n_eval_episodes=10
+            self.model, eval_env, n_eval_episodes=10, render=True
         )
         print("Mean Reward:", mean_reward, "Standard Deviation Of Reward:", std_reward)
 
