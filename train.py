@@ -10,11 +10,14 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from SaveOnBestTrainingRewardCallback import SaveOnBestTrainingRewardCallback
 from stable_baselines3.common.monitor import Monitor
 
+from stable_baselines3.common import results_plotter
+
 # import library to read from YAML file
 import yaml
 import argparse
 
-import os 
+import os
+
 
 class ExecuteTraining:
     def __init__(
@@ -30,7 +33,7 @@ class ExecuteTraining:
         timesteps,
     ):
         self.env = gym.make(env_name)
-        
+
         self.experiment_name = experiment_name
         self.timesteps = timesteps
         self.log_dir = "./" + self.experiment_name + "_best_model"
@@ -38,7 +41,7 @@ class ExecuteTraining:
 
         # make the self.log_dir directory
         os.makedirs(self.log_dir, exist_ok=True)
-    
+
         if policy == "DQN":
             self.model = DQN(
                 policy=learning_policy,
@@ -47,6 +50,7 @@ class ExecuteTraining:
                 exploration_initial_eps=initial_epsilon,
                 seed=seed,
                 verbose=verbose,
+                tensorboard_log="./dqn_cartpole_tensorboard/" + self.experiment_name
             )
 
     def run(self):
@@ -71,7 +75,7 @@ class ExecuteTraining:
 if __name__ == "__main__":
     # argparse
     parser = argparse.ArgumentParser(
-        description="Train an RL agent on the CartPole-v0 environment."
+        description="Train an RL agent on the CartPole-v1 environment (https://gym.openai.com/envs/CartPole-v1/)."
     )
     parser.add_argument("--config", type=str, help="Config YAML File path")
     args = parser.parse_args()
