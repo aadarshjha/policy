@@ -7,7 +7,7 @@ from stable_baselines3.dqn.policies import MlpPolicy
 import yaml
 import argparse
 
-# pass arugments to the class constructor: env name, policy, learning rate, learning rate decay,
+
 class ExecuteTraining:
     def __init__(
         self,
@@ -36,10 +36,6 @@ class ExecuteTraining:
 
     def load_model(self, model_path):
         self.model = DQN.load(model_path)
-    
-    # def test(self):
-    #     self.model.test(self.env, n_episodes=10)
-    #     self.env.close()
 
 
 if __name__ == "__main__":
@@ -59,13 +55,13 @@ if __name__ == "__main__":
             print(exc)
 
     env = ExecuteTraining(
+        config["MODEL"],
         config["ENV"],
         config["LEARNING_POLICY"],
         config["LEARNING_RATE"],
         config["SEED"],
-        config["INITIAL_EPSILON"],
-        config["FINAL_EPSILON"],
-        config["EPSILON_DECAY"],
+        config["INTIAL_EPSILON"],
+        config["DOUBLE_Q"],
     )
 
     env.run()
