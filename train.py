@@ -1,6 +1,8 @@
 import gym
 
+import stable_baselines3
 from stable_baselines3 import DQN
+print(stable_baselines3.__version__)
 from stable_baselines3.dqn.policies import MlpPolicy
 
 # import library to read from YAML file
@@ -15,18 +17,19 @@ class ExecuteTraining:
         env_name,
         learning_policy,
         learning_rate,
-        seed,
         initial_epsilon,
-        double_q,
+        seed,
+        verbose,
     ):
         self.env = gym.make(env_name)
         if policy == "DQN":
             self.model = DQN(
                 policy=learning_policy,
-                learning_Rate=learning_rate,
+                env=self.env,
+                learning_rate=learning_rate,
                 exploration_initial_eps=initial_epsilon,
-                double_q=double_q,
                 seed=seed,
+                verbose=verbose,
             )
 
     def run(self):
@@ -59,9 +62,9 @@ if __name__ == "__main__":
         config["ENV"],
         config["LEARNING_POLICY"],
         config["LEARNING_RATE"],
-        config["SEED"],
         config["INTIAL_EPSILON"],
-        config["DOUBLE_Q"],
+        config["SEED"],
+        config["VERBOSE"],
     )
 
     env.run()
