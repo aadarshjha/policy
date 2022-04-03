@@ -11,4 +11,4 @@ CS 4267: Deep Learning Final Project
 
 ### Credit
 
-https://stable-baselines3.readthedocs.io/en/master/ sources much of the logic behind the project. 
+[Stable Baselines](https://stable-baselines3.readthedocs.io/en/master/) sources much of the logic behind the project. 
