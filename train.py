@@ -8,11 +8,13 @@ from stable_baselines3.common.evaluation import evaluate_policy
 
 # call back function to save best model
 from SaveOnBestTrainingRewardCallback import SaveOnBestTrainingRewardCallback
+from stable_baselines3.common.monitor import Monitor
 
 # import library to read from YAML file
 import yaml
 import argparse
 
+import os 
 
 class ExecuteTraining:
     def __init__(
@@ -28,8 +30,15 @@ class ExecuteTraining:
         timesteps,
     ):
         self.env = gym.make(env_name)
+        
         self.experiment_name = experiment_name
         self.timesteps = timesteps
+        self.log_dir = "./" + self.experiment_name + "_best_model"
+        self.env = Monitor(self.env, self.log_dir)
+
+        # make the self.log_dir directory
+        os.makedirs(self.log_dir, exist_ok=True)
+    
         if policy == "DQN":
             self.model = DQN(
                 policy=learning_policy,
@@ -42,7 +51,7 @@ class ExecuteTraining:
 
     def run(self):
         callback = SaveOnBestTrainingRewardCallback(
-            check_freq=1000, log_dir="./" + self.experiment_name + "_best_model"
+            check_freq=1000, log_dir=self.log_dir
         )
         self.model.learn(total_timesteps=self.timesteps, callback=callback)
         self.env.close()
@@ -60,7 +69,6 @@ class ExecuteTraining:
 
 
 if __name__ == "__main__":
-
     # argparse
     parser = argparse.ArgumentParser(
         description="Train an RL agent on the CartPole-v0 environment."

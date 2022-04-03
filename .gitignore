@@ -160,3 +160,6 @@ reinforcement/
 
 # macs
 .DS_Store
+
+# ignore the best models dir
+*_*_*_best_model/
