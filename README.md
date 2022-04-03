@@ -8,3 +8,7 @@ CS 4267: Deep Learning Final Project
 ### Instillation
 
 `conda create --name <env> --file requirements.txt`
+
+### Credit
+
+https://stable-baselines3.readthedocs.io/en/master/ sources much of the logic behind the project. 
