@@ -1,9 +1,12 @@
 import gym
+import numpy as np
 
 import stable_baselines3
 from stable_baselines3 import DQN
+
 print(stable_baselines3.__version__)
 from stable_baselines3.dqn.policies import MlpPolicy
+from stable_baselines3.common.evaluation import evaluate_policy
 
 # import library to read from YAML file
 import yaml
@@ -36,6 +39,14 @@ class ExecuteTraining:
         self.model.learn(total_timesteps=10000)
         self.model.save("cartpole_model")
         self.env.close()
+
+    def evaluate(self):
+        # evaluates the model over 10 episodes, collects mean and standard deviation.
+        eval_env = gym.make(self.env_name)
+        meaen_reward, std_reward = evaluate_policy(
+            self.model, eval_env, n_eval_episodes=10
+        )
+        print("Mean Reward:", meaen_reward, "Standard Deviation Of Reward:", std_reward)
 
     def load_model(self, model_path):
         self.model = DQN.load(model_path)
