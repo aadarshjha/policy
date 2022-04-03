@@ -1,20 +1,71 @@
 import gym
 
 from stable_baselines3 import DQN
+from stable_baselines3.dqn.policies import MlpPolicy
 
-env = gym.make("CartPole-v0")
+# import library to read from YAML file
+import yaml
+import argparse
 
-model = DQN('MlpPolicy', 'CartPole-v1', verbose=1, tensorboard_log="./dqn_cartpole_tensorboard/")
-model.learn(total_timesteps=10_000, tb_log_name="first_run")
+# pass arugments to the class constructor: env name, policy, learning rate, learning rate decay,
+class ExecuteTraining:
+    def __init__(
+        self,
+        policy,
+        env_name,
+        learning_policy,
+        learning_rate,
+        seed,
+        initial_epsilon,
+        double_q,
+    ):
+        self.env = gym.make(env_name)
+        if policy == "DQN":
+            self.model = DQN(
+                policy=learning_policy,
+                learning_Rate=learning_rate,
+                exploration_initial_eps=initial_epsilon,
+                double_q=double_q,
+                seed=seed,
+            )
 
-# del model # remove to demonstrate saving and loading
+    def run(self):
+        self.model.learn(total_timesteps=10000)
+        self.model.save("cartpole_model")
+        self.env.close()
 
-# model = DQN.load("dqn_cartpole")
+    def load_model(self, model_path):
+        self.model = DQN.load(model_path)
+    
+    # def test(self):
+    #     self.model.test(self.env, n_episodes=10)
+    #     self.env.close()
 
-# obs = env.reset()
-# while True:
-#     action, _states = model.predict(obs, deterministic=True)
-#     obs, reward, done, info = env.step(action)
-#     env.render()
-#     if done:
-#       obs = env.reset()
+
+if __name__ == "__main__":
+
+    # argparse
+    parser = argparse.ArgumentParser(
+        description="Train an RL agent on the CartPole-v0 environment."
+    )
+    parser.add_argument("--config", type=str, help="Config YAML File path")
+    args = parser.parse_args()
+
+    # read the config file
+    with open(args.config, "r") as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    env = ExecuteTraining(
+        config["ENV"],
+        config["LEARNING_POLICY"],
+        config["LEARNING_RATE"],
+        config["SEED"],
+        config["INITIAL_EPSILON"],
+        config["FINAL_EPSILON"],
+        config["EPSILON_DECAY"],
+    )
+
+    env.run()

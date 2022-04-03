@@ -1,9 +1,8 @@
 # main.py
-# Centralizes experimentation
+# Centralizes tesing experimentation
 # Aadarsh Jha
 
 import gym
-
 
 class ExecuteEnviornment:
     def __init__(self):
