@@ -64,9 +64,9 @@ class ExecuteTraining:
 
     def evaluate(self):
         # evaluates the model over 10 episodes, collects mean and standard deviation.
-        eval_env = gym.make(self.env_name)
+        eval_env = gym.make('CartPole-v1')
         mean_reward, std_reward = evaluate_policy(
-            self.model, eval_env, n_eval_episodes=100, render=True
+            DQN.load("./logs/dqn_experiment_1/best_model"), eval_env, n_eval_episodes=10, render=True, deterministic=True
         )
         print("Mean Reward:", mean_reward, "Standard Deviation Of Reward:", std_reward)
 
@@ -152,6 +152,8 @@ if __name__ == "__main__":
         config["TIMESTEPS"],
     )
 
-    env.run()
-    env.plot_figures()
-    env.plot_episodic_deviation()
+    # env.run()
+    # env.plot_figures()
+    # env.plot_episodic_deviation()
+
+    env.evaluate()
