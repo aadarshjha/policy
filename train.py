@@ -82,9 +82,6 @@ class ExecuteTraining:
     def plot_episodic_reward(self):
         # plot the results
         _, y = ts2xy(load_results(self.log_dir), "timesteps")
-
-        print(len(y), " Episodes")
-
         plt.plot(np.arange(len(y)), y)
         plt.xlabel("Episodes")
         plt.savefig(self.log_dir + "average.png")
