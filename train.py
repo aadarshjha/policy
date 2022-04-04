@@ -73,7 +73,7 @@ class ExecuteTraining:
     def load_model(self, model_path):
         self.model = DQN.load(model_path)
 
-    def plot_figures(self): 
+    def plot_figures(self):
         self.plot_episodic_reward()
         self.plot_average_reward()
 
@@ -108,6 +108,22 @@ class ExecuteTraining:
         plt.savefig(self.log_dir + "moving_average.png")
         plt.close()
 
+    def plot_episodic_deviation(self):
+        _, y = ts2xy(load_results(self.log_dir), "timesteps")
+
+        y_std = []
+
+        # computes average of y
+        for i in range(len(y)):
+            # get average moving up until ith element
+            std = np.std(y[: i + 1])
+            y_std.append(std)
+
+        plt.plot(np.arange(len(y)), y_std)
+        plt.xlabel("Episodes")
+        plt.savefig(self.log_dir + "std.png")
+        plt.close()
+
 
 if __name__ == "__main__":
     # argparse
@@ -138,3 +154,4 @@ if __name__ == "__main__":
 
     env.run()
     env.plot_figures()
+    env.plot_episodic_deviation()
