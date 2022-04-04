@@ -73,17 +73,40 @@ class ExecuteTraining:
     def load_model(self, model_path):
         self.model = DQN.load(model_path)
 
-    def plot_training_results(self):
+    def plot_figures(self): 
+        self.plot_episodic_reward()
+        self.plot_average_reward()
+
+    def plot_episodic_reward(self):
         # plot the results
         _, y = ts2xy(load_results(self.log_dir), "timesteps")
 
         print(len(y), " Episodes")
 
-        plt.plot(np.arange(len(y)), y, label="DQN")
+        plt.plot(np.arange(len(y)), y)
+        plt.xlabel("Episodes")
+        plt.savefig(self.log_dir + "average.png")
+        plt.close()
+
+    def plot_average_reward(self):
+        # plot the results
+        _, y = ts2xy(load_results(self.log_dir), "timesteps")
+
+        y_moving_average = []
+
+        # computes average of y
+        for i in range(len(y)):
+            # get average moving up until ith element
+            average = np.sum(y[: i + 1]) / (i + 1)
+            y_moving_average.append(average)
+
+        print(len(y), " Episodes")
+
+        plt.plot(np.arange(len(y)), y_moving_average)
         plt.xlabel("Episodes")
         plt.ylabel("Rewards")
-        plt.legend()
-        plt.savefig(self.log_dir + "average.png")
+        plt.savefig(self.log_dir + "moving_average.png")
+        plt.close()
 
 
 if __name__ == "__main__":
@@ -114,4 +137,4 @@ if __name__ == "__main__":
     )
 
     env.run()
-    env.plot_training_results()
+    env.plot_figures()
