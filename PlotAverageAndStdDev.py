@@ -6,16 +6,6 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 
 class PlotAverageAndStdDev(BaseCallback):
-    """
-    Callback for saving a model (the check is done every ``check_freq`` steps)
-    based on the training reward (in practice, we recommend using ``EvalCallback``).
-
-    :param check_freq: (int)
-    :param log_dir: (str) Path to the folder where the model will be saved.
-      It must contains the file created by the ``Monitor`` wrapper.
-    :param verbose: (int)
-    """
-
     def __init__(self, check_freq: int, log_dir: str, verbose=1):
         super(PlotAverageAndStdDev, self).__init__(verbose)
         self.check_freq = check_freq
@@ -46,20 +36,18 @@ class PlotAverageAndStdDev(BaseCallback):
                         f"Termination critereion reached, saving... {self.save_path}.zip"
                     )
                     self.model.save(self.save_path)
-                    # stops the training. 
+                    # stops the training.
                     return False
 
                 if self.verbose > 0:
                     print(f"Num timesteps: {self.num_timesteps}")
-                    print(f"Num episodese: {self.n_episodes}")
+                    print(f"Num episodes: {self.n_episodes}")
                     print(
                         f"Best mean reward: {self.best_mean_reward:.2f} | Mean over the last 100 episodes: {mean_reward:.2f}"
                     )
 
-                # New best model, you could save the agent here
                 if mean_reward > self.best_mean_reward:
                     self.best_mean_reward = mean_reward
-                    # Example for saving best model
                     if self.verbose > 0:
                         print(f"Saving new best model to {self.save_path}.zip")
                     self.model.save(self.save_path)

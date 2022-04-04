@@ -6,20 +6,18 @@ import os
 from stable_baselines3 import DQN
 from stable_baselines3.dqn.policies import MlpPolicy
 from stable_baselines3.common.evaluation import evaluate_policy
-from SaveOnBestTrainingRewardCallback import SaveOnBestTrainingRewardCallback
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common import results_plotter
-from stable_baselines3.common.callbacks import (
-    EvalCallback,
-    StopTrainingOnRewardThreshold,
-)
 
+from stable_baselines3.common.results_plotter import load_results, ts2xy
 from PlotAverageAndStdDev import PlotAverageAndStdDev
 
-from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
+import matplotlib.pyplot as plt
 
 import yaml
 import argparse
+
+# global log directory
+log_dir = "./logs"
 
 
 class ExecuteTraining:
@@ -39,11 +37,13 @@ class ExecuteTraining:
 
         self.experiment_name = experiment_name
         self.timesteps = timesteps
-        self.log_dir = "./" + self.experiment_name + "_best_model"
-        self.env = Monitor(self.env, self.log_dir)
 
-        # make the self.log_dir directory
-        os.makedirs(self.log_dir, exist_ok=True)
+        self.log_dir = log_dir + "/" + self.experiment_name
+
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir, exist_ok=True)
+
+        self.env = Monitor(self.env, self.log_dir)
 
         if policy == "DQN":
             self.model = DQN(
@@ -53,11 +53,10 @@ class ExecuteTraining:
                 exploration_initial_eps=initial_epsilon,
                 seed=seed,
                 verbose=0,
-                tensorboard_log="./dqn_cartpole_tensorboard/" + self.experiment_name,
             )
 
     def run(self):
-        # centralized call back function. 
+        # centralized call back function.
         callback = PlotAverageAndStdDev(check_freq=1, log_dir=self.log_dir, verbose=1)
         # need to collect information when each episode ends.
         self.model.learn(total_timesteps=self.timesteps, callback=callback)
@@ -73,6 +72,18 @@ class ExecuteTraining:
 
     def load_model(self, model_path):
         self.model = DQN.load(model_path)
+
+    def plot_training_results(self):
+        # plot the results
+        _, y = ts2xy(load_results(self.log_dir), "timesteps")
+
+        print(len(y), " Episodes")
+
+        plt.plot(np.arange(len(y)), y, label="DQN")
+        plt.xlabel("Episodes")
+        plt.ylabel("Rewards")
+        plt.legend()
+        plt.savefig(self.log_dir + "average.png")
 
 
 if __name__ == "__main__":
@@ -103,3 +114,4 @@ if __name__ == "__main__":
     )
 
     env.run()
+    env.plot_training_results()
