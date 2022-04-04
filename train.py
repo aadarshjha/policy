@@ -1,22 +1,22 @@
 import gym
 import numpy as np
 
-import stable_baselines3
+import os
+
 from stable_baselines3 import DQN
 from stable_baselines3.dqn.policies import MlpPolicy
 from stable_baselines3.common.evaluation import evaluate_policy
-
-# call back function to save best model
 from SaveOnBestTrainingRewardCallback import SaveOnBestTrainingRewardCallback
 from stable_baselines3.common.monitor import Monitor
-
 from stable_baselines3.common import results_plotter
+from stable_baselines3.common.callbacks import (
+    EvalCallback,
+    StopTrainingOnRewardThreshold,
+)
 
-# import library to read from YAML file
+
 import yaml
 import argparse
-
-import os
 
 
 class ExecuteTraining:
@@ -57,7 +57,13 @@ class ExecuteTraining:
         callback = SaveOnBestTrainingRewardCallback(
             check_freq=1000, log_dir=self.log_dir
         )
-        self.model.learn(total_timesteps=self.timesteps, callback=callback)
+        callback_on_best = StopTrainingOnRewardThreshold(
+            reward_threshold=100, verbose=1
+        )
+        eval_callback = EvalCallback(
+            gym.make("Cartpole-v1"), callback_on_new_best=callback_on_best, verbose=1
+        )
+        self.model.learn(total_timesteps=self.timesteps, callback=eval_callback)
         self.env.close()
 
     def evaluate(self):
