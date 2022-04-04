@@ -64,18 +64,20 @@ class ExecuteTraining:
 
     def evaluate(self):
         # evaluates the model over 10 episodes, collects mean and standard deviation.
-        eval_env = gym.make('CartPole-v1')
+        eval_env = gym.make("CartPole-v1")
         mean_reward, std_reward = evaluate_policy(
-            DQN.load("./logs/dqn_experiment_1/best_model"), eval_env, n_eval_episodes=10, render=True, deterministic=True
+            DQN.load("./logs/dqn_experiment_1/best_model"),
+            eval_env,
+            n_eval_episodes=10,
+            render=True,
+            deterministic=True,
         )
         print("Mean Reward:", mean_reward, "Standard Deviation Of Reward:", std_reward)
-
-    def load_model(self, model_path):
-        self.model = DQN.load(model_path)
 
     def plot_figures(self):
         self.plot_episodic_reward()
         self.plot_average_reward()
+        self.plot_episodic_deviation()
 
     def plot_episodic_reward(self):
         # plot the results
@@ -99,8 +101,6 @@ class ExecuteTraining:
             # get average moving up until ith element
             average = np.sum(y[: i + 1]) / (i + 1)
             y_moving_average.append(average)
-
-        print(len(y), " Episodes")
 
         plt.plot(np.arange(len(y)), y_moving_average)
         plt.xlabel("Episodes")
@@ -152,8 +152,6 @@ if __name__ == "__main__":
         config["TIMESTEPS"],
     )
 
-    # env.run()
-    # env.plot_figures()
-    # env.plot_episodic_deviation()
-
+    env.run()
+    env.plot_figures()
     env.evaluate()
