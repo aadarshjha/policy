@@ -14,6 +14,7 @@ from stable_baselines3.common.callbacks import (
     StopTrainingOnRewardThreshold,
 )
 
+from PlotAverageAndStdDev import PlotAverageAndStdDev
 
 import yaml
 import argparse
@@ -49,28 +50,34 @@ class ExecuteTraining:
                 learning_rate=learning_rate,
                 exploration_initial_eps=initial_epsilon,
                 seed=seed,
-                verbose=verbose,
+                verbose=0,
                 tensorboard_log="./dqn_cartpole_tensorboard/" + self.experiment_name,
             )
 
     def run(self):
-        callback = SaveOnBestTrainingRewardCallback(
-            check_freq=1000, log_dir=self.log_dir
-        )
-        callback_on_best = StopTrainingOnRewardThreshold(
-            reward_threshold=100, verbose=1
-        )
-        eval_callback = EvalCallback(
-            gym.make("Cartpole-v1"), callback_on_new_best=callback_on_best, verbose=1
-        )
-        self.model.learn(total_timesteps=self.timesteps, callback=eval_callback)
+        # callback = SaveOnBestTrainingRewardCallback(
+        #     check_freq=1000, log_dir=self.log_dir
+        # )
+        # callback_on_best = StopTrainingOnRewardThreshold(
+        #     reward_threshold=195.0, verbose=1,
+        # )
+        # eval_callback = EvalCallback(
+        #     gym.make("Cartpole-v1"),
+        #     callback_on_new_best=callback_on_best,
+        #     verbose=1,
+        #     n_eval_episodes=100,
+        # )
+        callback = PlotAverageAndStdDev(check_freq=1, log_dir=self.log_dir, verbose=1)
+
+        # need to collect information when each episode ends.
+        self.model.learn(total_timesteps=self.timesteps, callback=callback)
         self.env.close()
 
     def evaluate(self):
         # evaluates the model over 10 episodes, collects mean and standard deviation.
         eval_env = gym.make(self.env_name)
         mean_reward, std_reward = evaluate_policy(
-            self.model, eval_env, n_eval_episodes=10, render=True
+            self.model, eval_env, n_eval_episodes=100, render=True
         )
         print("Mean Reward:", mean_reward, "Standard Deviation Of Reward:", std_reward)
 
