@@ -35,18 +35,18 @@ class PlotAverageAndStdDev(BaseCallback):
 
         # by default is at 1, so we save everything.
         if self.n_calls % self.check_freq == 0:
-            # Retrieve training reward
             x, y = ts2xy(load_results(self.log_dir), "timesteps")
+
             if len(x) > 0:
-                # Mean training reward over the last 100 episodes
                 mean_reward = np.mean(y[-100:])
 
-                if mean_reward > 100.0:
+                if mean_reward > 195.0:
                     # terminate the training, save the model.
                     print(
                         f"Termination critereion reached, saving... {self.save_path}.zip"
                     )
                     self.model.save(self.save_path)
+                    # stops the training. 
                     return False
 
                 if self.verbose > 0:
