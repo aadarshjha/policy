@@ -8,6 +8,9 @@ from keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 from argparse import ArgumentParser
 import yaml
+import os
+
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 class DQN:
     def __init__(
@@ -121,7 +124,7 @@ class DQN:
                     )
                     break
                 self.experience_replay()
-                
+
         print("Training terminated.")
 
 
