@@ -49,21 +49,21 @@ class ExecuteTraining:
             self.model = DQN(
                 policy="MlpPolicy",
                 env=self.env,
-                learning_rate=0.0023, 
-                batch_size=64, 
-                buffer_size=100000, 
-                exploration_final_eps=0.04, 
-                exploration_fraction=0.16, 
-                gamma=0.99, 
-                gradient_steps=128, 
-                learning_starts=1000, 
+                learning_rate=0.0023,
+                batch_size=64,
+                buffer_size=100000,
+                exploration_final_eps=0.04,
+                exploration_fraction=0.16,
+                gamma=0.99,
+                gradient_steps=128,
+                learning_starts=1000,
             )
 
     def run(self):
         # centralized call back function.
         callback = PlotAverageAndStdDev(check_freq=1, log_dir=self.log_dir, verbose=1)
         # need to collect information when each episode ends.
-        self.model.learn(total_timesteps=100000, callback=callback)
+        self.model.learn(total_timesteps=100000, log_interval=10_000)
         self.env.close()
 
     def evaluate(self):
