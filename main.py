@@ -100,7 +100,7 @@ class DQN:
             step = 0
             while True:
                 step += 1
-                env.render()
+                # env.render()
                 action = self.act(state)
                 state_next, reward, terminal, _ = env.step(action)
                 reward = reward if not terminal else -reward
