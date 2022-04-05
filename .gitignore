@@ -163,3 +163,6 @@ reinforcement/
 
 # ignore the best models dir
 *_*_*_best_model/
+
+# ignore the venv
+reinforce/
