@@ -9,20 +9,6 @@ from tensorflow.keras.optimizers import Adam
 from argparse import ArgumentParser
 import yaml
 
-# argparse to fetch the yaml config file
-parser = ArgumentParser()
-parser.add_argument("--config", default="config.yaml", type=str)
-args = parser.parse_args()
-with open(args.config, "r") as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
-
-# seeding
-seed = config["SEED"]
-np.random.seed(seed)
-random.seed(seed)
-# set seed of tf
-tf.random.set_seed(seed)
-
 class DQN:
     def __init__(
         self,
@@ -91,14 +77,27 @@ class DQN:
     def train(self):
         env = gym.make(self.env_name)
         run = 0
+
+        episodic_rewards = []
+        average_episodic_rewards = []
+        standard_dev_rewards = [] 
+
         while True:
+
+            # if the average of the episodic_rewards is greater than or equal to 195, over the past 100 episodes, stop training
+            if len(episodic_rewards) >= 100:
+                if sum(episodic_rewards[-100:]) / 100 >= 195:
+                    # save the model
+                    self.model.save("best_model.h5")
+                    break
+
             run += 1
             state = env.reset()
             state = np.reshape(state, [1, self.observation_space])
             step = 0
             while True:
                 step += 1
-                # env.render()
+                env.render()
                 action = self.act(state)
                 state_next, reward, terminal, _ = env.step(action)
                 reward = reward if not terminal else -reward
@@ -106,8 +105,14 @@ class DQN:
                 self.remember(state, action, reward, state_next, terminal)
                 state = state_next
                 if terminal:
+                    # save episodic reward 
+                    episodic_rewards.append(step)
+
+                    # save average episodic reward
+                    average_episodic_rewards.append(np.mean(episodic_rewards))
+
                     print(
-                        "Run: "
+                        "Episode: "
                         + str(run)
                         + ", exploration: "
                         + str(self.exploration_rate)
@@ -116,11 +121,26 @@ class DQN:
                     )
                     break
                 self.experience_replay()
+                
+        print("Training terminated.")
 
 
 if __name__ == "__main__":
 
 
+    # argparse to fetch the yaml config file
+    parser = ArgumentParser()
+    parser.add_argument("--config", default="config.yaml", type=str)
+    args = parser.parse_args()
+    with open(args.config, "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+
+    # seeding
+    seed = config["SEED"]
+    np.random.seed(seed)
+    random.seed(seed)
+    # set seed of tf
+    tf.random.set_seed(seed)
 
     DQNAgent = DQN(
         ENV_NAME=config["ENV_NAME"],
