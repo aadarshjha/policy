@@ -1,6 +1,5 @@
 import gym
 import math
-import keras
 import random
 import numpy as np
 import tensorflow
@@ -135,8 +134,8 @@ class DQN:
     # run function
     def run(self):
         scores = []
-        mean_scores = [] 
-        std_scores = [] 
+        mean_scores = []
+        std_scores = []
 
         for e in range(self.n_episodes):
             print("Episode: ", e, "Average Reward ", np.mean(scores[-100:]))
@@ -172,7 +171,7 @@ class DQN:
                     )
 
             scores.append(i)
-            # maen of the last 100 
+            # maen of the last 100
             mean_score = np.mean(scores[-100:])
             mean_scores.append(np.mean(scores))
             std_scores.append(np.std(scores))
@@ -180,19 +179,15 @@ class DQN:
             if mean_score >= self.n_win_tick and e >= 100:
                 if not self.quiet:
                     print(
-                        "Ran "
-                        + str(e)
-                        + " episodes. Solved after "
-                        + str(e)
-                        + "trials"
+                        "Ran " + str(e) + " episodes. Solved after " + str(e) + "trials"
                     )
                 # Save the weights
-                self.model.save_weights(PATH +  "final_model_weights.h5")
+                self.model.save_weights(PATH + "final_model_weights.h5")
 
                 # Save the model architecture
                 with open(PATH + "final_model_architecture.json", "w") as f:
                     f.write(self.model.to_json())
-                
+
                 # save scores, mean_scores, std_scores dump to JSON
                 with open(PATH + "scores.json", "w") as f:
                     # dump to JSON
@@ -217,18 +212,18 @@ class DQN:
         if not self.quiet:
             print("did not solve after " + str(e) + " episodes")
 
-        # save the scores 
+        # save the scores
         with open(PATH + "_failed_scores.json", "w") as f:
             # dump to JSON
             JSON_object = {
                 "scores": scores,
                 "mean_scores": mean_scores,
                 "std_scores": std_scores,
-                "episodes": e
+                "episodes": e,
             }
             json.dump(JSON_object, f)
-        
-        # save the weights and architecturer 
+
+        # save the weights and architecturer
         self.model.save_weights(PATH + "failed_model_weights.h5")
         with open(PATH + "failed_model_architecture.json", "w") as f:
             f.write(self.model.to_json())
