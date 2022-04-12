@@ -3,36 +3,50 @@ import math
 import keras
 import random
 import numpy as np
-import tensorflow as tf
+import tensorflow
+import yaml
+import argparse
 from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
-from tf.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 
 
 class DQN:
-    def __init__(self):
+    def __init__(
+        self,
+        N_EPISODES,
+        GAMMA,
+        EPSILON,
+        EPSILON_MIN,
+        EPSILON_DECAY,
+        ALPHA,
+        ALPHA_DECAY,
+        BATCH_SIZE,
+        ENV_NAME,
+    ):
+
         self.max_score = 0
-        self.n_episodes = 5000
+        self.n_episodes = N_EPISODES
         self.n_win_tick = 195
         self.max_env_steps = 1000
 
-        self.gamma = 1.0
-        self.epsilon = 1.0  # exploration
-        self.epsilon_min = 0.01
-        self.epsilon_decay = 0.999
+        self.gamma = GAMMA
+        self.epsilon = EPSILON
+        self.epsilon_min = EPSILON_MIN
+        self.epsilon_decay = EPSILON_DECAY
 
-        self.alpha = 0.01  # learning rate
-        self.alpha_decay = 0.01
+        self.alpha = ALPHA
+        self.alpha_decay = ALPHA_DECAY
         self.alpha_test_factor = 1.0
 
-        self.batch_size = 256
+        self.batch_size = BATCH_SIZE
         self.monitor = False
         self.quiet = False
 
         # environment Parameters
         self.memory = deque(maxlen=100000)
-        self.env = gym.make("CartPole-v0")
+        self.env = gym.make(ENV_NAME)
 
         if self.max_env_steps is not None:
             self.env._max_episode_steps = self.max_env_steps
@@ -65,13 +79,11 @@ class DQN:
     def get_epsilon(self, t):
         return max(
             self.epsilon_min,
-            min(epsilon, 1.0 - math.log10((t + 1) * self.epsilon_decay)),
+            min(self.epsilon, 1.0 - math.log10((t + 1) * self.epsilon_decay)),
         )
-
 
     def preprocess(self, state):
         return np.reshape(state, [1, 4])
-
 
     def replay(self, batch_size, epsilon):
         x_batch, y_batch = [], []
@@ -79,18 +91,20 @@ class DQN:
         for state, action, reward, next_state, done in minibatch:
             y_target = self.model.predict(state)
             y_target[0][action] = (
-                reward if done else reward + self.gamma * np.max(self.model.predict(next_state)[0])
+                reward
+                if done
+                else reward + self.gamma * np.max(self.model.predict(next_state)[0])
             )
             x_batch.append(state[0])
             y_batch.append(y_target[0])
-        self.model.fit(np.array(x_batch), np.array(y_batch), batch_size=len(x_batch), verbose=0)
+        self.model.fit(
+            np.array(x_batch), np.array(y_batch), batch_size=len(x_batch), verbose=0
+        )
         if epsilon > self.epsilon_min:
             epsilon *= self.epsilon_decay
 
-
     # run function
     def run(self):
-        global max_score
         scores = deque(maxlen=100)
         for e in range(self.n_episodes):
             print(e)
@@ -108,13 +122,13 @@ class DQN:
                 self.remember(state, action, reward, next_state, done)
                 state = next_state
                 i += 1
-            if i > max_score:
-                max_score = i
+            if i > self.max_score:
+                self.max_score = i
                 # Save the weights
-                self.model.save_weights(str(max_score) + "model_weights.h5")
+                self.model.save_weights(str(self.max_score) + "model_weights.h5")
 
                 # Save the model architecture
-                with open(str(max_score) + "model_architecture.json", "w") as f:
+                with open(str(self.max_score) + "model_architecture.json", "w") as f:
                     f.write(self.model.to_json())
 
             scores.append(i)
@@ -129,10 +143,10 @@ class DQN:
                         + "trials"
                     )
                 # Save the weights
-                self.model.save_weights(str(max_score) + "final_model_weights.h5")
+                self.model.save_weights(str(self.max_score) + "final_model_weights.h5")
 
                 # Save the model architecture
-                with open(str(max_score) + "final_model_architecture.json", "w") as f:
+                with open(str(self.max_score) + "final_model_architecture.json", "w") as f:
                     f.write(self.model.to_json())
 
                 return e - 100
@@ -149,7 +163,27 @@ class DQN:
             print("did not solve after " + str(e) + " episodes")
         return e
 
+
 # Training the network
 if __name__ == "__main__":
-    agent = DQN()
+    # parse the command line for a file argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file", help="the file to train on")
+    args = parser.parse_args()
+
+    # read yaml file
+    with open("./experiments/" + args.file, "r") as ymlfile:
+        cfg = yaml.load(ymlfile)
+
+    agent = DQN(
+        cfg["N_EPISODES"],
+        cfg["GAMMA"],
+        cfg["EPSILON"],
+        cfg["EPSILON_MIN"],
+        cfg["EPSILON_DECAY"],
+        cfg["ALPHA"],
+        cfg["ALPHA_DECAY"],
+        cfg["BATCH_SIZE"],
+        cfg["ENV_NAME"],
+    )
     agent.run()
