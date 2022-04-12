@@ -139,7 +139,7 @@ class DQN:
         std_scores = [] 
 
         for e in range(self.n_episodes):
-            print("Episode: ", e)
+            print("Episode: ", e, "Average Reward ", np.mean(scores[-100:]))
             if e > self.n_episodes - 2:
                 global epsilon
                 epsilon = 0.0
