@@ -199,6 +199,7 @@ class DQN:
                         "scores": scores,
                         "mean_scores": mean_scores,
                         "std_scores": std_scores,
+                        "episodes": e,
                     }
                     json.dump(JSON_object, f)
                 return e
@@ -222,6 +223,7 @@ class DQN:
                 "scores": scores,
                 "mean_scores": mean_scores,
                 "std_scores": std_scores,
+                "episodes": e
             }
             json.dump(JSON_object, f)
         
