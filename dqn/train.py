@@ -172,8 +172,9 @@ class DQN:
                     )
 
             scores.append(i)
-            mean_score = np.mean(scores)
-            mean_scores.append(mean_score)
+            # maen of the last 100 
+            mean_score = np.mean(scores[-100:])
+            mean_scores.append(np.mean(scores))
             std_scores.append(np.std(scores))
 
             if mean_score >= self.n_win_tick and e >= 100:
