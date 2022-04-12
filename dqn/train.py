@@ -4,12 +4,37 @@ import keras
 import random
 import numpy as np
 import tensorflow
+import os
 import yaml
 import argparse
 from collections import deque
+import json
 from keras.models import Sequential
 from keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
+
+
+# parse the command line for a file argument
+parser = argparse.ArgumentParser()
+parser.add_argument("--file", help="the file to train on")
+args = parser.parse_args()
+
+# read yaml file
+with open("./experiments/" + args.file, "r") as ymlfile:
+    cfg = yaml.load(ymlfile)
+
+seed = cfg["SEED"]
+
+tensorflow.random.set_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
+
+if cfg["DRIVE"]:
+    PREFIX = "../../drive/MyDrive/policy/"
+else:
+    PREFIX = ""
+
+PATH = PREFIX + "logs/" + cfg["EXP_NAME"] + "/"
 
 
 class DQN:
@@ -24,6 +49,7 @@ class DQN:
         ALPHA_DECAY,
         BATCH_SIZE,
         ENV_NAME,
+        seed,
     ):
 
         self.max_score = 0
@@ -47,6 +73,9 @@ class DQN:
         # environment Parameters
         self.memory = deque(maxlen=100000)
         self.env = gym.make(ENV_NAME)
+
+        # set seed of gym env
+        self.env.seed(seed)
 
         if self.max_env_steps is not None:
             self.env._max_episode_steps = self.max_env_steps
@@ -105,9 +134,12 @@ class DQN:
 
     # run function
     def run(self):
-        scores = deque(maxlen=100)
+        scores = []
+        mean_scores = [] 
+        std_scores = [] 
+
         for e in range(self.n_episodes):
-            print(e)
+            print("Episode: ", e)
             if e > self.n_episodes - 2:
                 global epsilon
                 epsilon = 0.0
@@ -117,39 +149,60 @@ class DQN:
             while not done:
                 action = self.choose_action(state, self.get_epsilon(e))
                 next_state, reward, done, _ = self.env.step(action)
-                # env.render()
                 next_state = self.preprocess(next_state)
                 self.remember(state, action, reward, next_state, done)
                 state = next_state
                 i += 1
             if i > self.max_score:
-                self.max_score = i
-                # Save the weights
-                self.model.save_weights(str(self.max_score) + "model_weights.h5")
 
-                # Save the model architecture
-                with open(str(self.max_score) + "model_architecture.json", "w") as f:
+                self.max_score = i
+
+                self.model.save_weights(PATH + "weights.h5")
+                with open(PATH + "model_architecture.json", "w") as f:
                     f.write(self.model.to_json())
+
+                # save a JSON file with the number of episodes so far and the max score
+                with open(PATH + "info.json", "w") as f:
+                    f.write(
+                        '{"episodes":'
+                        + str(e)
+                        + ',"max_score":'
+                        + str(self.max_score)
+                        + "}"
+                    )
 
             scores.append(i)
             mean_score = np.mean(scores)
+            mean_scores.append(mean_score)
+            std_scores.append(np.std(scores))
+
             if mean_score >= self.n_win_tick and e >= 100:
                 if not self.quiet:
                     print(
                         "Ran "
                         + str(e)
                         + " episodes. Solved after "
-                        + str(e - 100)
+                        + str(e)
                         + "trials"
                     )
                 # Save the weights
-                self.model.save_weights(str(self.max_score) + "final_model_weights.h5")
+                self.model.save_weights(PATH +  "final_model_weights.h5")
 
                 # Save the model architecture
-                with open(str(self.max_score) + "final_model_architecture.json", "w") as f:
+                with open(PATH + "final_model_architecture.json", "w") as f:
                     f.write(self.model.to_json())
+                
+                # save scores, mean_scores, std_scores dump to JSON
+                with open(PATH + "scores.json", "w") as f:
+                    # dump to JSON
+                    JSON_object = {
+                        "scores": scores,
+                        "mean_scores": mean_scores,
+                        "std_scores": std_scores,
+                    }
+                    json.dump(JSON_object, f)
+                return e
 
-                return e - 100
             if e % 100 == 0 and not self.quiet:
                 print(
                     "episode "
@@ -161,19 +214,30 @@ class DQN:
             self.replay(self.batch_size, self.get_epsilon(e))
         if not self.quiet:
             print("did not solve after " + str(e) + " episodes")
+
+        # save the scores 
+        with open(PATH + "_failed_scores.json", "w") as f:
+            # dump to JSON
+            JSON_object = {
+                "scores": scores,
+                "mean_scores": mean_scores,
+                "std_scores": std_scores,
+            }
+            json.dump(JSON_object, f)
+        
+        # save the weights and architecturer 
+        self.model.save_weights(PATH + "failed_model_weights.h5")
+        with open(PATH + "failed_model_architecture.json", "w") as f:
+            f.write(self.model.to_json())
         return e
 
 
 # Training the network
 if __name__ == "__main__":
-    # parse the command line for a file argument
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the file to train on")
-    args = parser.parse_args()
 
-    # read yaml file
-    with open("./experiments/" + args.file, "r") as ymlfile:
-        cfg = yaml.load(ymlfile)
+    # always create a logs folder
+    if not os.path.exists(PATH):
+        os.makedirs(PATH)
 
     agent = DQN(
         cfg["N_EPISODES"],
@@ -185,5 +249,6 @@ if __name__ == "__main__":
         cfg["ALPHA_DECAY"],
         cfg["BATCH_SIZE"],
         cfg["ENV_NAME"],
+        seed,
     )
     agent.run()
