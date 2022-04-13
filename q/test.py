@@ -6,6 +6,7 @@ import argparse
 from agent import AgentLearning
 import random
 import json
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp", type=str, default="default")
@@ -73,10 +74,6 @@ reward_history = []
 # iterate through 100 episodes
 for episode in range(100):
     observation = env.reset()
-    # initialize the episode reward
-
-    env.render()
-
     episode_reward = 0
     # iterate through 200 steps
     done = False
@@ -93,17 +90,5 @@ for episode in range(100):
     print(episode_reward)
     # save the episode reward
     with open(PATH + "episode_rewards.json", "w") as f:
-        JSON_object = {"episode_rewards": reward_history}
+        JSON_object = {"episode_rewards": reward_history, "average_reward": np.mean(reward_history)}
         json.dump(JSON_object, f)
-
-for i in range(100):
-    env.render()
-    action = choose_action(agent.create_state(observation))
-    observation, reward, done, info = env.step(action)
-
-    print(i)
-
-    if done:
-        observation = env.reset()
-
-env.close()
