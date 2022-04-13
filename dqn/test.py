@@ -6,7 +6,7 @@ import argparse
 import random
 import json
 import numpy as np
-import keras 
+import keras
 import tensorflow as tf
 
 parser = argparse.ArgumentParser()
@@ -38,8 +38,8 @@ observation = env.reset()
 reward_history = []
 
 # load model with tf
-# config model network 
-json_file = open(PATH + "final_model_architecture.json", 'r')
+# config model network
+json_file = open(PATH + "final_model_architecture.json", "r")
 loaded_model_json = json_file.read()
 json_file.close()
 loaded_model = keras.models.model_from_json(loaded_model_json)
@@ -63,5 +63,8 @@ for episode in range(100):
     reward_history.append(episode_reward)
 
 with open(PATH + "test_episode_rewards.json", "w") as f:
-    JSON_object = {"episode_rewards": reward_history, "average_reward": np.mean(reward_history)}
+    JSON_object = {
+        "episode_rewards": reward_history,
+        "average_reward": np.mean(reward_history),
+    }
     json.dump(JSON_object, f)

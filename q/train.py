@@ -51,6 +51,7 @@ def q_learning(env, agent):
             agent.create_Q(state, valid_actions)
             action = agent.choose_action(state)
             obs, reward, done, _ = env.step(action)
+            print(reward)
             episode_rewards += reward
 
             if step != 0:

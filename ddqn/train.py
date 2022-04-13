@@ -8,7 +8,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.models import Sequential
 
-EPISODES = 300
+EPISODES = 1000
 
 
 # Double DQN Agent for the Cartpole
@@ -128,8 +128,8 @@ class DoubleDQNAgent:
 
 
 if __name__ == "__main__":
-    # In case of CartPole-v1, you can play until 500 time step
-    env = gym.make("CartPole-v1")
+    # In case of CartPole-v0, you can play until 500 time step
+    env = gym.make("CartPole-v0")
     # get size of state and action from environment
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
