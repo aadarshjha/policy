@@ -83,7 +83,6 @@ for episode in range(100):
         observation, reward, done, info = env.step(action)
         episode_reward += reward
         create_Q(agent.create_state(observation), [0, 1])
-        reward_history.append(episode_reward)
         if done:
             break
     # print the episode reward

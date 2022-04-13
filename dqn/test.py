@@ -57,14 +57,11 @@ for episode in range(100):
         action = np.argmax(model.predict(observation.reshape(1, 4)))
         observation, reward, done, info = env.step(action)
         episode_reward += reward
-        reward_history.append(episode_reward)
         if done:
             break
-    # print the episode reward
     print(episode_reward)
     reward_history.append(episode_reward)
-    
-    # save the episode reward
+
 with open(PATH + "test_episode_rewards.json", "w") as f:
     JSON_object = {"episode_rewards": reward_history, "average_reward": np.mean(reward_history)}
     json.dump(JSON_object, f)
