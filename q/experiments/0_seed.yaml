@@ -1,8 +1,0 @@
-N_EPISODES: 5000
-GAMMA: 0.99
-EPSILON: 1.0
-ALPHA: 0.01
-ENV_NAME: "CartPole-v0"
-SEED: 0
-EXP_NAME: "0_seed_q"
-DRIVE: false

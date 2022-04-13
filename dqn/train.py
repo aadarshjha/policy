@@ -213,7 +213,7 @@ class DQN:
             print("did not solve after " + str(e) + " episodes")
 
         # save the scores
-        with open(PATH + "_failed_scores.json", "w") as f:
+        with open(PATH + "failed_scores.json", "w") as f:
             # dump to JSON
             JSON_object = {
                 "scores": scores,
