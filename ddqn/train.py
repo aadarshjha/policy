@@ -27,14 +27,16 @@ np.random.seed(seed)
 random.seed(seed)
 
 
-DRIVE = False
+DRIVE = True
 
 if DRIVE:
     PREFIX = "../../drive/MyDrive/policy/"
 else:
     PREFIX = ""
 
+
 PATH = PREFIX + "logs/" + experience_name + "/"
+print(PATH)
 
 if not os.path.exists(PATH):
     os.makedirs(PATH)
@@ -210,7 +212,12 @@ for e in range(EPISODES):
     mean_score = np.mean(scores[-100:])
 
     # we save if its a max
-    if max_reward > tot_rewards:
+    if tot_rewards > max_reward:
+
+        max_reward = tot_rewards
+
+        print("Maximum Reward Achieved, " + str(e) + "Reward, " + str(tot_rewards) + "\n")
+
         dqn.model.save_weights(PATH + "max_regular_network_weights.h5")
         dqn.model_target.save_weights(PATH + "max_target_network_weights.h5")
 
