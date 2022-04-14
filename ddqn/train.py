@@ -6,11 +6,35 @@ from collections import deque
 import tensorflow as tf
 from tensorflow import keras
 import random
+from gym 
+import argparse
+import yaml
+import tensorflow
 
-#Create Gym
-from gym import wrappers
+# parse the command line for a file argument
+parser = argparse.ArgumentParser()
+parser.add_argument("--file", help="the file to train on")
+args = parser.parse_args()
+
+# read yaml file
+with open("./experiments/" + args.file, "r") as ymlfile:
+    cfg = yaml.load(ymlfile)
+
+seed = cfg["SEED"]
+
+tensorflow.random.set_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
+
+if cfg["DRIVE"]:
+    PREFIX = "../../drive/MyDrive/policy/"
+else:
+    PREFIX = ""
+
+PATH = PREFIX + "logs/" + cfg["EXP_NAME"] + "/"
+
+
 envCartPole = gym.make('CartPole-v0')
-envCartPole.seed(0)
 
 EPISODES = 1000
 TRAIN_END = 0
@@ -32,7 +56,7 @@ class DoubleDeepQNetwork():
         self.alpha = alpha
         self.gamma = gamma
         #Explore/Exploit
-        self.epsilon = 1.0
+        self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.model = self.build_model()
