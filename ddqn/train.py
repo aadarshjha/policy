@@ -77,22 +77,17 @@ class DoubleDeepQNetwork:
         self.loss = []
 
     def build_model(self):
-        model = (
-            keras.Sequential()
-        )  # linear stack of layers https://keras.io/models/sequential/
-        model.add(
-            keras.layers.Dense(24, input_dim=self.nS, activation="relu")
-        )  # [Input] -> Layer 1
-        #   Dense: Densely connected layer https://keras.io/layers/core/
-        #   24: Number of neurons
-        #   input_dim: Number of input variables
-        #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(keras.layers.Dense(24, activation="relu"))  # Layer 2 -> 3
-        model.add(
-            keras.layers.Dense(self.nA, activation="linear")
-        )  # Layer 3 -> [output]
-        #   Size has to match the output (different actions)
-        #   Linear activation on the last layer
+        model = keras.Sequential(
+            [
+                keras.layers.Dense(24, input_dim=self.nS, activation="relu"),
+                keras.layers.Dense(48, activation="relu"),
+                keras.layers.Dense(96, activation="relu"),
+                keras.layers.Dense(48, activation="relu"),
+                keras.layers.Dense(24, activation="relu"),
+                keras.layers.Dense(self.nA, activation="relu"),
+            ]
+        )
+
         model.compile(
             loss="mean_squared_error",  # Loss function: Mean Squared Error
             optimizer=keras.optimizers.Adam(lr=self.alpha),
@@ -246,10 +241,12 @@ for e in range(EPISODES):
             )
         break
 
-    # Update the weights after each episode (You can configure this for x steps as well
+    print(
+        "Episode: {}/{}".format(e, EPISODES),
+        "Total Reward: {}".format(tot_rewards),
+        "Mean Reward (Last 100): {}".format(mean_score),
+    )
     dqn.update_target_from_model()
-    # If our current NN passes we are done
-    # I am going to use the last 5 runs
 
 if e > EPISODES:
     print("Failed to solved")
