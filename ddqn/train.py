@@ -1,285 +1,160 @@
+#Imports and gym creation
 import gym
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
 import numpy as np
+import matplotlib.pyplot as plt
+from collections import deque
+import tensorflow as tf
+from tensorflow import keras
 import random
-from matplotlib import pyplot as plt
-import os
-import argparse
-import json
 
-#  collect seed argument and epsilon
-parser = argparse.ArgumentParser()
-parser.add_argument("--seed", type=int, default=0)
-parser.add_argument("--epsilon", type=float, default=0.1)
-parser.add_argument("--exp", type=str, default="default")
+#Create Gym
+from gym import wrappers
+envCartPole = gym.make('CartPole-v0')
+envCartPole.seed(0)
 
-args = parser.parse_args()
-seed = args.seed
-epsilon = args.epsilon
-experience_name = args.exp
+EPISODES = 1000
+TRAIN_END = 0
 
-# seed tensorflow
-tf.random.set_seed(seed)
-# seed random
-random.seed(seed)
-# seed numpy
-np.random.seed(seed)
+def discount_rate(): #Gamma
+    return 0.95
 
-DRIVE = False
+def learning_rate(): #Alpha
+    return 0.001
 
-if DRIVE:
-    PREFIX = "../../drive/MyDrive/policy/"
-else:
-    PREFIX = ""
+def batch_size():
+    return 24
 
-PATH = PREFIX + "logs/" + experience_name + "/"
+class DoubleDeepQNetwork():
+    def __init__(self, states, actions, alpha, gamma, epsilon,epsilon_min, epsilon_decay):
+        self.nS = states
+        self.nA = actions
+        self.memory = deque([], maxlen=2500)
+        self.alpha = alpha
+        self.gamma = gamma
+        #Explore/Exploit
+        self.epsilon = 1.0
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
+        self.model = self.build_model()
+        self.model_target = self.build_model() #Second (target) neural network
+        self.update_target_from_model() #Update weights
+        self.loss = []
+        
+    def build_model(self):
+        model = keras.Sequential() #linear stack of layers https://keras.io/models/sequential/
+        model.add(keras.layers.Dense(24, input_dim=self.nS, activation='relu')) #[Input] -> Layer 1
+        #   Dense: Densely connected layer https://keras.io/layers/core/
+        #   24: Number of neurons
+        #   input_dim: Number of input variables
+        #   activation: Rectified Linear Unit (relu) ranges >= 0
+        model.add(keras.layers.Dense(24, activation='relu')) #Layer 2 -> 3
+        model.add(keras.layers.Dense(self.nA, activation='linear')) #Layer 3 -> [output]
+        #   Size has to match the output (different actions)
+        #   Linear activation on the last layer
+        model.compile(loss='mean_squared_error', #Loss function: Mean Squared Error
+                      optimizer=keras.optimizers.Adam(lr=self.alpha)) #Optimaizer: Adam (Feel free to check other options)
+        return model
 
-if not os.path.exists(PATH):
-    os.makedirs(PATH)
+    def update_target_from_model(self):
+        #Update the target model from the base model
+        self.model_target.set_weights( self.model.get_weights() )
 
-# CARTPOLE GAME SETTINGS
-OBSERVATION_SPACE_DIMS = 4
-ACTION_SPACE = [0, 1]
+    def action(self, state):
+        if np.random.rand() <= self.epsilon:
+            return random.randrange(self.nA) #Explore
+        action_vals = self.model.predict(state) #Exploit: Use the NN to predict the correct action from this state
+        return np.argmax(action_vals[0])
 
-# AGENT/NETWORK HYPERPARAMETERS
-EPSILON_INITIAL = epsilon
-EPSILON_DECAY = 0.99
-EPSILON_MIN = 0.01
-ALPHA = 0.001  # learning rate
-GAMMA = 0.99  # discount factor
-TAU = 0.1  # target network soft update hyperparameter
-EXPERIENCE_REPLAY_BATCH_SIZE = 32
-AGENT_MEMORY_LIMIT = 2000
-MIN_MEMORY_FOR_EXPERIENCE_REPLAY = 500
+    def test_action(self, state): #Exploit
+        action_vals = self.model.predict(state)
+        return np.argmax(action_vals[0])
 
+    def store(self, state, action, reward, nstate, done):
+        #Store the experience in memory
+        self.memory.append( (state, action, reward, nstate, done) )
 
-def create_dqn():
+    def experience_replay(self, batch_size):
+        #Execute the experience replay
+        minibatch = random.sample( self.memory, batch_size ) #Randomly sample from memory
 
-    model = Sequential(
-        [
-            Dense(24, input_shape=(4,), activation="relu"),
-            Dense(48, activation="relu"),
-            Dense(96, activation="relu"),
-            Dense(48, activation="relu"),
-            Dense(24, activation="relu"),
-            Dense(2, activation="relu"),
-        ]
-    )
+        #Convert to numpy for speed by vectorization
+        x = []
+        y = []
+        np_array = np.array(minibatch)
+        st = np.zeros((0,self.nS)) #States
+        nst = np.zeros( (0,self.nS) )#Next States
+        for i in range(len(np_array)): #Creating the state and next state np arrays
+            st = np.append( st, np_array[i,0], axis=0)
+            nst = np.append( nst, np_array[i,3], axis=0)
+        st_predict = self.model.predict(st) #Here is the speedup! I can predict on the ENTIRE batch
+        nst_predict = self.model.predict(nst)
+        nst_predict_target = self.model_target.predict(nst) #Predict from the TARGET
+        index = 0
+        for state, action, reward, nstate, done in minibatch:
+            x.append(state)
+            #Predict from state
+            nst_action_predict_target = nst_predict_target[index]
+            nst_action_predict_model = nst_predict[index]
+            if done == True: #Terminal: Just assign reward much like {* (not done) - QB[state][action]}
+                target = reward
+            else:   #Non terminal
+                target = reward + self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)] #Using Q to get T is Double DQN
+            target_f = st_predict[index]
+            target_f[action] = target
+            y.append(target_f)
+            index += 1
+        #Reshape for Keras Fit
+        x_reshape = np.array(x).reshape(batch_size,self.nS)
+        y_reshape = np.array(y)
+        epoch_count = 1
+        hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
+        #Graph Losses
+        for i in range(epoch_count):
+            self.loss.append( hist.history['loss'][i] )
+        #Decay Epsilon
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+        
+#Create the agents
+nS = envCartPole.observation_space.shape[0] #This is only 4
+nA = envCartPole.action_space.n #Actions
+dqn = DoubleDeepQNetwork(nS, nA, learning_rate(), discount_rate(), 1, 0.001, 0.995 )
 
-    model.compile(loss="mse", optimizer=Adam(lr=ALPHA))
+batch_size = batch_size()
 
-    return model
+#Training
+rewards = [] #Store rewards for graphing
+epsilons = [] # Store the Explore/Exploit
+TEST_Episodes = 0
+for e in range(EPISODES):
+    state = envCartPole.reset()
+    state = np.reshape(state, [1, nS]) # Resize to store in memory to pass to .predict
+    tot_rewards = 0
+    for time in range(200): #200 is when you "solve" the game. This can continue forever as far as I know
+        action = dqn.action(state)
+        nstate, reward, done, _ = envCartPole.step(action)
+        nstate = np.reshape(nstate, [1, nS])
+        tot_rewards += reward
+        dqn.store(state, action, reward, nstate, done) # Resize to store in memory to pass to .predict
+        state = nstate
 
+        avg_reward = np.average(rewards[-100:])
 
-class DoubleDQNAgent(object):
-    def __init__(self):
-        self.memory = []
-        self.online_network = create_dqn()
-        self.target_network = create_dqn()
-        self.epsilon = EPSILON_INITIAL
-        self.has_talked = False
-
-    def act(self, state):
-        if self.epsilon > np.random.rand():
-            # explore
-            return np.random.choice(ACTION_SPACE)
-        else:
-            # exploit
-            state = self._reshape_state_for_net(state)
-            q_values = self.online_network.predict(state)[0]
-            return np.argmax(q_values)
-
-    def experience_replay(self):
-
-        minibatch = random.sample(self.memory, EXPERIENCE_REPLAY_BATCH_SIZE)
-        minibatch_new_q_values = []
-
-        for experience in minibatch:
-            state, action, reward, next_state, done = experience
-            state = self._reshape_state_for_net(state)
-            experience_new_q_values = self.online_network.predict(state)[0]
-            if done:
-                q_update = reward
-            else:
-                next_state = self._reshape_state_for_net(next_state)
-                # using online network to SELECT action
-                online_net_selected_action = np.argmax(
-                    self.online_network.predict(next_state)
-                )
-                # using target network to EVALUATE action
-                target_net_evaluated_q_value = self.target_network.predict(next_state)[
-                    0
-                ][online_net_selected_action]
-                q_update = reward + GAMMA * target_net_evaluated_q_value
-            experience_new_q_values[action] = q_update
-            minibatch_new_q_values.append(experience_new_q_values)
-        minibatch_states = np.array([e[0] for e in minibatch])
-        minibatch_new_q_values = np.array(minibatch_new_q_values)
-        self.online_network.fit(
-            minibatch_states, minibatch_new_q_values, verbose=False, epochs=1
-        )
-
-    def update_target_network(self):
-        q_network_theta = self.online_network.get_weights()
-        target_network_theta = self.target_network.get_weights()
-        counter = 0
-        for q_weight, target_weight in zip(q_network_theta, target_network_theta):
-            target_weight = target_weight * (1 - TAU) + q_weight * TAU
-            target_network_theta[counter] = target_weight
-            counter += 1
-        self.target_network.set_weights(target_network_theta)
-
-    def remember(self, state, action, reward, next_state, done):
-        if len(self.memory) <= AGENT_MEMORY_LIMIT:
-            experience = (state, action, reward, next_state, done)
-            self.memory.append(experience)
-
-    def update_epsilon(self):
-        self.epsilon = max(self.epsilon * EPSILON_DECAY, EPSILON_MIN)
-
-    def _reshape_state_for_net(self, state):
-        return np.reshape(state, (1, OBSERVATION_SPACE_DIMS))
-
-
-def train():
-    env = gym.make("CartPole-v0")
-    env.seed(seed)
-    MAX_TRAINING_EPISODES = 2000
-    MAX_STEPS_PER_EPISODE = 200
-
-    max_score = 0
-    scores = []
-    mean_scores = []
-    std_scores = []
-
-    agent = DoubleDQNAgent()
-
-    for episode_index in range(0, MAX_TRAINING_EPISODES):
-        state = env.reset()
-        episode_score = 0
-
-        for _ in range(MAX_STEPS_PER_EPISODE):
-            action = agent.act(state)
-            next_state, reward, done, _ = env.step(action)
-            episode_score += reward
-            agent.remember(state, action, reward, next_state, done)
-            state = next_state
-            if len(agent.memory) > MIN_MEMORY_FOR_EXPERIENCE_REPLAY:
-                agent.experience_replay()
-                agent.update_target_network()
-            if done:
-                break
-
-        scores.append(episode_score)
-        mean_scores.append(np.mean(scores))
-        std_scores.append(np.std(scores))
-
-        mean_score = np.mean(scores[-100:])
-        agent.update_epsilon()
-
-        # if the score is maximum
-        if episode_score > max_score:
-            max_score = episode_score
-
-            # save the maximum score
-            print("Max found at {} trials, Reward {}".format(episode_index, max_score))
-
-            # Save the weights
-            agent.online_network.save_weights(
-                PATH + "max_online_final_model_weights.h5"
-            )
-
-            # Save the model architecture
-            with open(PATH + "max_online_model_architecture.json", "w") as f:
-                f.write(agent.target_network.to_json())
-
-            # Save the weights
-            agent.online_network.save_weights(
-                PATH + "max_target_final_model_weights.h5"
-            )
-
-            # Save the model architecture
-            with open(PATH + "max_target_model_architecture.json", "w") as f:
-                f.write(agent.target_network.to_json())
-
-            # save scores, mean_scores, std_scores dump to JSON
-            with open(PATH + "max_scores.json", "w") as f:
-                # dump to JSON
-                JSON_object = {
-                    "scores": scores,
-                    "mean_scores": mean_scores,
-                    "std_scores": std_scores,
-                    "episodes": episode_index,
-                }
-                json.dump(JSON_object, f)
-
-        print(
-            "Episode %d scored %d, avg %.2f"
-            % (episode_index, episode_score, mean_score)
-        )
-
-        # if we reach convregence
-        if mean_score >= 195 and episode_index > 100:
-            print("Env solved in {} trials".format(episode_index))
-
-            # Save the weights
-            agent.online_network.save_weights(PATH + "online_solved_model_weights.h5")
-
-            # Save the model architecture
-            with open(PATH + "solved_online_model_architecture.json", "w") as f:
-                f.write(agent.target_network.to_json())
-
-            # Save the weights
-            agent.online_network.save_weights(PATH + "target_solved_model_weights.h5")
-
-            # Save the model architecture
-            with open(PATH + "solved_target_model_architecture.json", "w") as f:
-                f.write(agent.target_network.to_json())
-
-            # save scores, mean_scores, std_scores dump to JSON
-            with open(PATH + "solved_scores.json", "w") as f:
-                # dump to JSON
-                JSON_object = {
-                    "scores": scores,
-                    "mean_scores": mean_scores,
-                    "std_scores": std_scores,
-                    "episodes": episode_index,
-                }
-                json.dump(JSON_object, f)
-            return
-
-    print("Failed to solve in {} trials".format(episode_index))
-
-    # Save the weights
-    agent.online_network.save_weights(PATH + "online_failed_model_weights.h5")
-
-    # Save the model architecture
-    with open(PATH + "failed_online_model_architecture.json", "w") as f:
-        f.write(agent.target_network.to_json())
-
-    # Save the weights
-    agent.online_network.save_weights(PATH + "target_failed_model_weights.h5")
-
-    # Save the model architecture
-    with open(PATH + "failed_target_model_architecture.json", "w") as f:
-        f.write(agent.target_network.to_json())
-
-    # save scores, mean_scores, std_scores dump to JSON
-    with open(PATH + "failed_scores.json", "w") as f:
-        # dump to JSON
-        JSON_object = {
-            "scores": scores,
-            "mean_scores": mean_scores,
-            "std_scores": std_scores,
-            "episodes": episode_index,
-        }
-        json.dump(JSON_object, f)
-
-    return
-
-
-if __name__ == "__main__":
-    trials = train()
+        if done: 
+            rewards.append(tot_rewards)
+            epsilons.append(dqn.epsilon)
+            print("episode: {}/{}, score: {}, avg: {}"
+                  .format(e, EPISODES, tot_rewards, avg_reward))
+            break
+        #Experience Replay
+        if len(dqn.memory) > batch_size:
+            dqn.experience_replay(batch_size)
+    #Update the weights after each episode (You can configure this for x steps as well
+    dqn.update_target_from_model()
+    #If our current NN passes we are done
+    #I am going to use the last 5 runs
+    if len(rewards) > 100 and np.average(rewards[-100:]) > 195:
+        #Set the rest of the EPISODES for testing
+        TEST_Episodes = EPISODES - e
+        TRAIN_END = e
+        break
