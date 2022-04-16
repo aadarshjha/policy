@@ -44,7 +44,7 @@ if not os.path.exists(PATH):
 
 envCartPole = gym.make("CartPole-v0")
 
-EPISODES = 1000
+EPISODES = 150
 TRAIN_END = 0
 
 
