@@ -8,9 +8,9 @@ from tensorflow import keras
 import random
 import gym
 import argparse
-import yaml
 import tensorflow
 import os
+import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=0)
@@ -212,11 +212,13 @@ for e in range(EPISODES):
     mean_score = np.mean(scores[-100:])
 
     # we save if its a max
-    if tot_rewards > max_reward:
+    if tot_rewards >= max_reward:
 
         max_reward = tot_rewards
 
-        print("Maximum Reward Achieved, " + str(e) + "Reward, " + str(tot_rewards) + "\n")
+        print(
+            "Maximum Reward Achieved, " + str(e) + "Reward, " + str(tot_rewards) + "\n"
+        )
 
         dqn.model.save_weights(PATH + "max_regular_network_weights.h5")
         dqn.model_target.save_weights(PATH + "max_target_network_weights.h5")
@@ -227,9 +229,14 @@ for e in range(EPISODES):
         with open(PATH + "max_target_model_architecture.json", "w") as f:
             f.write(dqn.model_target.to_json())
 
-        # save a JSON file with the number of episodes so far and the max score
         with open(PATH + "max_info.json", "w") as f:
-            f.write('{"episodes":' + str(e) + ',"max_score":' + str(max_reward) + "}")
+            JSON_object = {
+                "scores": scores,
+                "mean_scores": mean_scores,
+                "std_scores": std_scores,
+                "episodes": e,
+            }
+            json.dump(JSON_object, f)
 
     if len(scores) > 100 and np.average(scores[-100:]) > 195:
         dqn.model.save_weights(PATH + "solved_regular_network_weights.h5")
@@ -243,9 +250,13 @@ for e in range(EPISODES):
 
         # save a JSON file with the number of episodes so far and the max score
         with open(PATH + "solved_info.json", "w") as f:
-            f.write(
-                '{"episodes":' + str(e) + ',"solved_score":' + str(max_reward) + "}"
-            )
+            JSON_object = {
+                "scores": scores,
+                "mean_scores": mean_scores,
+                "std_scores": std_scores,
+                "episodes": e,
+            }
+            json.dump(JSON_object, f)
         break
 
     print(
@@ -255,14 +266,21 @@ for e in range(EPISODES):
     )
     dqn.update_target_from_model()
 
-if e > EPISODES:
-    print("Failed to solved")
+dqn.model.save_weights(PATH + "final_regular_network_weights.h5")
+dqn.model_target.save_weights(PATH + "final_target_network_weights.h5")
 
-    dqn.model.save_weights(PATH + "failed_regular_network_weights.h5")
-    dqn.model_target.save_weights(PATH + "failed_target_network_weights.h5")
+with open(PATH + "final_regular_model_architecture.json", "w") as f:
+    f.write(dqn.model.to_json())
 
-    with open(PATH + "failed_regular_model_architecture.json", "w") as f:
-        f.write(dqn.model.to_json())
+with open(PATH + "final_target_model_architecture.json", "w") as f:
+    f.write(dqn.model_target.to_json())
 
-    with open(PATH + "failed_target_model_architecture.json", "w") as f:
-        f.write(dqn.model_target.to_json())
+# save a JSON file with the number of episodes so far and the max score
+with open(PATH + "final_info.json", "w") as f:
+    JSON_object = {
+        "scores": scores,
+        "mean_scores": mean_scores,
+        "std_scores": std_scores,
+        "episodes": e,
+    }
+    json.dump(JSON_object, f)
