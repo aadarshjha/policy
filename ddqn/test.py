@@ -29,21 +29,19 @@ if not os.path.exists(PATH):
 
 Q_table = None
 
-
-# use the Q_table to test the env
 env = gym.make("CartPole-v0")
 observation = env.reset()
-
 
 reward_history = []
 
 # load model with tf
 # config model network
-json_file = open(PATH + "final_model_architecture.json", "r")
+json_file = open(PATH + "max_regular_model_architecture.json", "r")
 loaded_model_json = json_file.read()
 json_file.close()
 loaded_model = keras.models.model_from_json(loaded_model_json)
-loaded_model.load_weights(PATH + "final_model_weights.h5")
+loaded_model.load_weights(PATH + "max_regular_network_weights.h5")
+
 
 model = loaded_model
 
@@ -54,7 +52,6 @@ for episode in range(100):
     # iterate through 200 steps
     done = False
     while done == False:
-        # state = np.reshape(state, [1, nS])
         action = np.argmax(model.predict(observation.reshape(1, 4)))
         observation, reward, done, info = env.step(action)
         episode_reward += reward
