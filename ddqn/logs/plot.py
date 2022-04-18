@@ -16,7 +16,7 @@ def plot_episodes(file_name, episodes, scores, mean_scores, std_scores):
     plt.plot(np.arange(episodes), mean_scores)
     plt.xlabel("Episodes")
     plt.ylabel("Mean Score")
-    plt.title("Episodic Scores")
+    plt.title("Mean Episodic Scores")
     plt.savefig(file_name + "_mean_scores.png")
     plt.close()
 
