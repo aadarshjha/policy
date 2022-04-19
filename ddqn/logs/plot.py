@@ -31,10 +31,10 @@ def plot_episodes(file_name, episodes, scores, mean_scores, std_scores):
 
 if __name__ == "__main__":
     file_names = [
-        ["./SEED_0_DDQN/max_info.json", "seed_0_DDQN"],
-        ["./SEED_0_DDQN_04/max_info.json", "SEED_0_DDQN_04"],
-        ["./SEED_0_DDQN_06/max_info.json", "SEED_0_DDQN_06"],
-        ["./SEED_123_DDQN/max_info.json", "seed_123_DDQN"],
+        ["./SEED_0_DDQN/final_info.json", "seed_0_DDQN"],
+        ["./SEED_0_DDQN_04/final_info.json", "SEED_0_DDQN_04"],
+        ["./SEED_0_DDQN_06/final_info.json", "SEED_0_DDQN_06"],
+        ["./SEED_123_DDQN/final_info.json", "seed_123_DDQN"],
     ]
 
     for element in file_names:
