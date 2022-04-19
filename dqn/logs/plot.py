@@ -31,9 +31,9 @@ def plot_episodes(file_name, episodes, scores, mean_scores, std_scores):
 if __name__ == "__main__":
     file_names = [
         ["./0_seed/scores.json", "seed_0"],
-        ["./0_seed_04/scores.json", "0_seed_04"],
+        ["./0_seed_04/failed_scores.json", "0_seed_04"],
         ["./0_seed_06/scores.json", "0_seed_06"],
-        ["./123_seed/scores.json", "seed_123_ep_06"],
+        ["./123_seed/failed_scores.json", "123_seed"],
     ]
 
     for element in file_names:
