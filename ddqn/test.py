@@ -60,7 +60,7 @@ for episode in range(100):
     print(episode_reward)
     reward_history.append(episode_reward)
 
-with open(PATH + "test_episode_rewards.json", "w") as f:
+with open(PATH + "test_episode_rewards_max.json", "w") as f:
     JSON_object = {
         "episode_rewards": reward_history,
         "average_reward": np.mean(reward_history),

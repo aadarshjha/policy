@@ -37,16 +37,19 @@ observation = env.reset()
 
 reward_history = []
 
-# if PATH + "final_model_architecture.json" exists 
-# then load the model architecture and weights
 if os.path.exists(PATH + "final_model_architecture.json"):
     json_file = open(PATH + "final_model_architecture.json", "r")
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = keras.models.model_from_json(loaded_model_json)
     loaded_model.load_weights(PATH + "final_model_weights.h5")
-else: 
-    pass 
+else:
+    json_file = open(PATH + "model_architecture.json", "r")
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = keras.models.model_from_json(loaded_model_json)
+    loaded_model.load_weights(PATH + "weights.h5")
+
 
 model = loaded_model
 
@@ -65,7 +68,7 @@ for episode in range(100):
     print(episode_reward)
     reward_history.append(episode_reward)
 
-with open(PATH + "test_episode_rewards.json", "w") as f:
+with open(PATH + "test_episode_rewards_max.json", "w") as f:
     JSON_object = {
         "episode_rewards": reward_history,
         "average_reward": np.mean(reward_history),

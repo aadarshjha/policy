@@ -28,7 +28,6 @@ def plot_episodes(file_name, episodes, scores, mean_scores, std_scores):
     plt.close()
 
 
-
 if __name__ == "__main__":
     file_names = [
         ["./0_seed/scores.json", "seed_0"],
