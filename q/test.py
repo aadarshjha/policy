@@ -43,10 +43,6 @@ agent = AgentLearning(Q_table, env)
 
 
 def choose_action(state):
-    # Find max Q value
-    # check if state does not exist Q_table
-    if state not in Q_table:
-        print("HELLO")
     max_Q = max(Q_table[state].values())
     actions = []
     for key, value in Q_table[state].items():
