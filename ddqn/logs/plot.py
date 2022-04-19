@@ -34,7 +34,7 @@ if __name__ == "__main__":
         ["./SEED_0_DDQN/max_info.json", "seed_0_DDQN"],
         ["./SEED_0_DDQN_04/max_info.json", "SEED_0_DDQN_04"],
         ["./SEED_0_DDQN_06/max_info.json", "SEED_0_DDQN_06"],
-        ["./SEED_123_DDQN/final_info.json", "seed_123_DDQN"],
+        ["./SEED_123_DDQN/max_info.json", "seed_123_DDQN"],
     ]
 
     for element in file_names:
