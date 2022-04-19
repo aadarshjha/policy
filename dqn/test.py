@@ -37,13 +37,16 @@ observation = env.reset()
 
 reward_history = []
 
-# load model with tf
-# config model network
-json_file = open(PATH + "final_model_architecture.json", "r")
-loaded_model_json = json_file.read()
-json_file.close()
-loaded_model = keras.models.model_from_json(loaded_model_json)
-loaded_model.load_weights(PATH + "final_model_weights.h5")
+# if PATH + "final_model_architecture.json" exists 
+# then load the model architecture and weights
+if os.path.exists(PATH + "final_model_architecture.json"):
+    json_file = open(PATH + "final_model_architecture.json", "r")
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = keras.models.model_from_json(loaded_model_json)
+    loaded_model.load_weights(PATH + "final_model_weights.h5")
+else: 
+    pass 
 
 model = loaded_model
 
