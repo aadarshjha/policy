@@ -70,6 +70,7 @@ class DoubleDeepQNetwork:
         self.alpha = alpha
         self.gamma = gamma
         # Explore/Exploit
+       
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
@@ -172,7 +173,7 @@ class DoubleDeepQNetwork:
 # Create the agents
 nS = envCartPole.observation_space.shape[0]  # This is only 4
 nA = envCartPole.action_space.n  # Actions
-dqn = DoubleDeepQNetwork(nS, nA, learning_rate(), discount_rate(), 1, 0.001, 0.995)
+dqn = DoubleDeepQNetwork(nS, nA, learning_rate(), discount_rate(), epsilon, 0.001, 0.995)
 
 batch_size = batch_size()
 
