@@ -139,5 +139,5 @@ if __name__ == "__main__":
     env.seed(seed)
     # set numpy seed
     np.random.seed(seed)
-    agent = AgentLearning(env, alpha=0.9, epsilon=epsilon, gamma=0.9)
+    agent = AgentLearning(env, 0.1, epsilon=epsilon, gamma=0.9)
     q_learning(env, agent)
